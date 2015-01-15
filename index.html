@@ -1,21 +1,67 @@
 <doctype HTML>
 <html lang='en'>
 	<head>
-
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<link rel="stylesheet" type="text/css" href="css/bootstrap.css">
 	<link rel="stylesheet" type="text/css" href="css/idangerous.swiper.css">
 
 	</head>
 
+	<style>
+
+	html {
+	  
+	}
+	body {
+	  margin: 0;
+	  font-family: Arial, Helvetica, sans-serif;
+	  font-size: 13px;
+	  position: relative;
+	  
+	}
+	.swiper-container {
+	  
+	  color: #fff;
+	  text-align: center;
+	}
+
+	#imageTitle{
+	min-height: 60px;
+	}
+
+	.glyphicon{
+		font-size:20px;
+	}
+
+	</style>
+
+
 	<body class="container">
 		<div class="container header">
-		<h1>imgur mobile swiper thing</h1>
+		<h3>imgur mobile swiper</h1>
+		The <select id="iSection"> 
+				<option value="hot">Hottest</option>
+				<option value="top">Top</option>
+			</select> images, sorted by 
+			<select id="iSort">
+				<option value="viral">most viral</option>
+				<option value="top">top</option>
+				<option value="time">time</option>
+			</select>
 		</div>
 
 		<div class="container">
+			<div id="imageTitle"></div>
 			<div class="swiper-container">
 	  			<div class="swiper-wrapper">
 
+				</div>
+			</div>
+			<div class="row" id="imageInput">
+				<div class="col-xs-12">
+					<span class="glyphicon glyphicon-ok-circle"></span>
+					<span class="glyphicon glyphicon-remove-circle"></span>
+					<span class="glyphicon glyphicon-heart pull-right"></span>
 				</div>
 			</div>
 		</div>
@@ -29,9 +75,11 @@
 	<script defer type="text/javascript" src="js/idangerous.swiper.js"></script>
 	<script type="text/javascript">
 	$(function(){
+
 		var iModel = Backbone.Model.extend({
 			defaults: {
-				"url": ""
+				"title": "",
+				"link": ""
 			},
 
 			render: function(){
@@ -76,6 +124,7 @@
 
 					m1.render();
 					m2.render();
+					$('#imageTitle').text(m1.get('title'));
 				}
 			}
 
@@ -91,6 +140,7 @@
 
             onSwiperCreated: function(swiper){
                 console.log('swiper created');
+
             },
             onSlideChangeStart: function(){
                 console.log('running unbinding - slidechangestart');
@@ -98,6 +148,7 @@
             },
             onSlideChangeEnd: function(swiper, direction){
                 console.log('running rebinding - slidechangeend');
+                $('.swiper-slide').css('max-height', window.screen.availHeight);
                 //partyModule.runRebinding();
                 var  curIdx = swiper.activeIndex;
                 if ( (direction === 'next') && (swiper.slides.length + 1 <= imageCollection.length) && (curIdx + 1 <= swiper.slides.length) ){
@@ -106,12 +157,15 @@
                     	console.log('[onSlideEnd] slide added!');
                     	//make and add a new slide
                     	ooModel.render();
-
+                    	
                 }
 
                 if ( (direction === "prev") && (swiper.slides.length + 1 <= imageCollection.length) && (curIdx -1 <= 0 ) ){
                     console.log('insert backwards slide?');
                 }
+
+                $('#imageTitle').text(imageCollection.at(curIdx).get('title'));
+                
 
                 console.log('[onSlideEnd] oCollection.length: ' + imageCollection.length);
                 console.log('[onSlideEnd] swiper.length: ' +  mySwiper.slides.length);
@@ -122,16 +176,30 @@
             }   
         });
 
+	
+		$('#iSection').change(function(){
+			console.log($('#iSection option:selected').val());
+			updateCollection();
+		});
+		$('#iSort').change(function(){
+			console.log($('#iSort option:selected').val());
+			updateCollection();
+		});
+
 
 		function updateCollection(){
-
+			var isection = $('#iSection option:selected').val();
+			var isort = $('#iSort option:selected').val()
 			$.ajax({
-	      		headers: {
-	                'Authorization': 'Client-ID 21d3e7e2ea4b5ac'
-	            },
+	      		headers: { 'Authorization': 'Client-ID 21d3e7e2ea4b5ac' },
 	            type:"GET",
-	            url: "https://api.imgur.com/3/gallery/hot/viral/0.json",
+	            url: "https://api.imgur.com/3/gallery/" + isection + "/" + isort +"/0.json",
 	            success: function(msg) {
+	            	
+	            	imageCollection.reset();
+	            	mySwiper.removeAllSlides();
+	            	mySwiper.reInit();
+
 	                console.log(msg.data.length);
 		            $.each(msg.data, function(i,entry){
 						console.log(entry);
@@ -151,6 +219,6 @@
 	</script>
 
 	<script type="text/template" id="imgur-entry-template">
-		<img class="img-responsive" src="<%= link %> ">
+		<img class="img-responsive" src="<%= link %> "/>
 	</script>
 </html>

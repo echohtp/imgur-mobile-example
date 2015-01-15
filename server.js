@@ -36,6 +36,17 @@ server.route({
 
 server.route({
     method: 'GET',
+    path: '/fonts/{param*}',
+    handler: {
+        directory: {
+            path: 'public',
+            path: './fonts'
+        }
+    }
+});
+
+server.route({
+    method: 'GET',
     path: '/css/{param*}',
     handler: {
         directory: {
