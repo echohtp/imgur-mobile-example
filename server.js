@@ -1,6 +1,4 @@
 var Hapi = require('hapi');
-var Jade = require('jade');
-var request = require('request');
 
 
 var sOptions = {
