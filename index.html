@@ -1,0 +1,156 @@
+<doctype HTML>
+<html lang='en'>
+	<head>
+
+	<link rel="stylesheet" type="text/css" href="css/bootstrap.css">
+	<link rel="stylesheet" type="text/css" href="css/idangerous.swiper.css">
+
+	</head>
+
+	<body class="container">
+		<div class="container header">
+		<h1>imgur mobile swiper thing</h1>
+		</div>
+
+		<div class="container">
+			<div class="swiper-container">
+	  			<div class="swiper-wrapper">
+
+				</div>
+			</div>
+		</div>
+
+	</body>
+
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/underscore.js"></script>
+	<script type="text/javascript" src="js/backbone.js"></script>
+	<script type="text/javascript" src="js/backbone.js"></script>
+	<script defer type="text/javascript" src="js/idangerous.swiper.js"></script>
+	<script type="text/javascript">
+	$(function(){
+		var iModel = Backbone.Model.extend({
+			defaults: {
+				"url": ""
+			},
+
+			render: function(){
+				var that = this;
+				var template = _.template( $('#imgur-entry-template').html() );
+
+				if ( that.get('is_album') == true){
+					console.log('model is album');
+					that.set('link', 'http://i.imgur.com/' + that.get('cover') + '.jpg');
+				}
+
+				var nSlide = mySwiper.createSlide ( template(that.attributes) );
+				nSlide.append();
+
+			}
+
+		});
+
+		var iCollection = Backbone.Collection.extend({
+			model: iModel
+		});
+
+		var imageCollection = new iCollection();
+
+		var iView = Backbone.View.extend({
+			tagName: 'div',
+			className: 'swiper-wrapper',
+
+			initialize: function(){
+				this.listenTo(this.collection, 'add', this.addOne);
+			}, 
+
+			render: function(){
+
+			},
+
+			addOne: function(){
+				console.log('something added');
+				if ( this.collection.length  > 2 && mySwiper.slides.length < 2){
+					var m1 = this.collection.at(0);
+					var m2 = this.collection.at(1);
+
+					m1.render();
+					m2.render();
+				}
+			}
+
+		});
+
+		var imageView = new iView({collection: imageCollection});
+
+		var mySwiper = $('.swiper-container').swiper({
+		    //Your options here:
+            mode: 'horizontal',
+            centeredSlides: true,     
+            
+
+            onSwiperCreated: function(swiper){
+                console.log('swiper created');
+            },
+            onSlideChangeStart: function(){
+                console.log('running unbinding - slidechangestart');
+                //partyModule.runUnbinding();
+            },
+            onSlideChangeEnd: function(swiper, direction){
+                console.log('running rebinding - slidechangeend');
+                //partyModule.runRebinding();
+                var  curIdx = swiper.activeIndex;
+                if ( (direction === 'next') && (swiper.slides.length + 1 <= imageCollection.length) && (curIdx + 1 <= swiper.slides.length) ){
+                    var ooModel = imageCollection.at(swiper.slides.length); 
+
+                    	console.log('[onSlideEnd] slide added!');
+                    	//make and add a new slide
+                    	ooModel.render();
+
+                }
+
+                if ( (direction === "prev") && (swiper.slides.length + 1 <= imageCollection.length) && (curIdx -1 <= 0 ) ){
+                    console.log('insert backwards slide?');
+                }
+
+                console.log('[onSlideEnd] oCollection.length: ' + imageCollection.length);
+                console.log('[onSlideEnd] swiper.length: ' +  mySwiper.slides.length);
+                console.log('[onSlideEnd] curIdx: '  + curIdx);
+                console.log('[onSlideEnd] direction: ' + direction);
+
+
+            }   
+        });
+
+
+		function updateCollection(){
+
+			$.ajax({
+	      		headers: {
+	                'Authorization': 'Client-ID 21d3e7e2ea4b5ac'
+	            },
+	            type:"GET",
+	            url: "https://api.imgur.com/3/gallery/hot/viral/0.json",
+	            success: function(msg) {
+	                console.log(msg.data.length);
+		            $.each(msg.data, function(i,entry){
+						console.log(entry);
+						if (typeof(entry) === 'object'){
+							tModel = new iModel(entry);
+							imageCollection.add(tModel);
+							console.log('image collection now contains: ' + imageCollection.length );
+						}
+					}); 
+	            }
+    		});
+			
+		}
+
+		updateCollection();
+	});
+	</script>
+
+	<script type="text/template" id="imgur-entry-template">
+		<img class="img-responsive" src="<%= link %> ">
+	</script>
+</html>
